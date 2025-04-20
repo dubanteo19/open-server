@@ -53,7 +53,7 @@ public class AuthService {
     }
 
     public LoginResponse googleLogin(TokenRequest request) {
-        final String CLIENT_ID = "590343439409-uf53vh5ftb6qbetd23s808tm2m5daavv.apps.googleusercontent.com";
+        final String CLIENT_ID = "";
         var jsonFactory = new GsonFactory();
         var transport = new NetHttpTransport();
         var audience = Collections.singleton(CLIENT_ID);
