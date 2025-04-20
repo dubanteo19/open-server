@@ -1,0 +1,17 @@
+@accessToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkdWJhbnRlb0BnbWFpbC5jb20iLCJyb2xlIjoiT1BFTkVSIiwiaWF0IjoxNzQ0NjM4OTIzLCJleHAiOjE3NDQ2Mzk4MjN9.gmyH4E8_sEywLymmaVwKS7hZNSN0Jm9ho0mBnkokssY
+@url = localhost:8080/api/v1/posts
+POST {{url}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "openerId": 1,
+  "payload": {
+    "content": "Hello guys this is my second post"
+  }
+}
+
+###get posts
+GET {{url}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
