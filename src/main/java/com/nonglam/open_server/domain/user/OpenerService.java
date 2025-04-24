@@ -5,6 +5,7 @@ import com.nonglam.open_server.domain.post.PostRepository;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
 import com.nonglam.open_server.domain.user.dto.request.OpenerUpdateRequest;
 import com.nonglam.open_server.domain.user.dto.response.OpenerDetail;
+import com.nonglam.open_server.exception.ResourceNotFoundException;
 import com.nonglam.open_server.shared.PageMapper;
 import com.nonglam.open_server.shared.PagedResponse;
 import lombok.AccessLevel;
@@ -12,9 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -28,10 +27,21 @@ public class OpenerService {
     PageMapper pageMapper;
     PostMapper postMapper;
 
-    public OpenerDetail getOpenerDetail(String username) {
-        var opener = openerRepository
+
+    public Opener findById(Long id) {
+        return openerRepository
+                .findById(id)
+                .orElseThrow(ResourceNotFoundException::openerNotFound);
+    }
+
+    public Opener findByUsername(String username) {
+        return openerRepository
                 .findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(ResourceNotFoundException::openerNotFound);
+    }
+
+    public OpenerDetail getOpenerDetail(String username) {
+        var opener = findByUsername(username);
         return openerMapper.toOpenerDetail(opener);
     }
 
@@ -47,9 +57,7 @@ public class OpenerService {
     }
 
     public OpenerDetail updateOpener(Long openerId, OpenerUpdateRequest request) {
-        var currentOpener = openerRepository
-                .findById(openerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var currentOpener = findById(openerId);
         openerMapper.updateOpener(currentOpener, request);
         var savedOpener = openerRepository.save(currentOpener);
         return openerMapper.toOpenerDetail(savedOpener);

@@ -24,8 +24,9 @@ public class OpenerMapper {
         );
     }
 
-    private OpenerResponse toOpenerResponse(Opener opener) {
-        return new OpenerResponse(opener.getId(),
+    public OpenerResponse toOpenerResponse(Opener opener) {
+        return new OpenerResponse(
+                opener.getId(),
                 opener.getUsername(),
                 opener.getDisplayName(),
                 opener.isVerified(),
