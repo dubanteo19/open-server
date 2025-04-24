@@ -13,39 +13,43 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 public class AuthController {
-    AuthService authService;
+  AuthService authService;
 
+  @GetMapping("test")
+  public String test() {
+    return "test ";
+  }
 
-    @GetMapping("/me")
-    public ResponseEntity<APIResponse<UserResponse>> me(@AuthenticationPrincipal CustomUserDetail userDetail) {
-        var user = userDetail.getUser();
-        var userResponse = new UserResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getAvatarUrl());
-        return ResponseEntity.ok(APIResponse.success("Get current user successfully", userResponse));
-    }
+  @GetMapping("/me")
+  public ResponseEntity<APIResponse<UserResponse>> me(@AuthenticationPrincipal CustomUserDetail userDetail) {
+    var user = userDetail.getUser();
+    var userResponse = new UserResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getAvatarUrl());
+    return ResponseEntity.ok(APIResponse.success("Get current user successfully", userResponse));
+  }
 
-    @PostMapping("/google")
-    public ResponseEntity<APIResponse<LoginResponse>> googleLogin(@RequestBody TokenRequest request) {
-        return ResponseEntity.ok(APIResponse.success("login successfully", authService.googleLogin(request)));
-    }
+  @PostMapping("/google")
+  public ResponseEntity<APIResponse<LoginResponse>> googleLogin(@RequestBody TokenRequest request) {
+    return ResponseEntity.ok(APIResponse.success("login successfully", authService.googleLogin(request)));
+  }
 
-    @PostMapping("/login")
-    public ResponseEntity<APIResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(APIResponse.success("login successfully", authService.login(request)));
-    }
+  @PostMapping("/login")
+  public ResponseEntity<APIResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+    return ResponseEntity.ok(APIResponse.success("login successfully", authService.login(request)));
+  }
 
+  @PostMapping("/register")
+  public ResponseEntity<APIResponse<UserResponse>> register(@RequestBody RegisterRequest request) {
+    var response = authService.register(request);
 
-    @PostMapping("/register")
-    public ResponseEntity<APIResponse<UserResponse>> register(@RequestBody RegisterRequest request) {
-        var response = authService.register(request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(APIResponse.success("Registered successfully", response));
-    }
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body(APIResponse.success("Registered successfully", response));
+  }
 }

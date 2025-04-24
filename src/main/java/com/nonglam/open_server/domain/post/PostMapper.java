@@ -2,35 +2,37 @@ package com.nonglam.open_server.domain.post;
 
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
-import com.nonglam.open_server.domain.user.dto.response.OpenerResponse;
+import com.nonglam.open_server.domain.user.Opener;
+import com.nonglam.open_server.domain.user.OpenerMapper;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PostMapper {
-    public Post toPost(PostCreateRequest request) {
-        Post post = new Post();
-        post.setContent(request.payload().content());
-        post.setDeleted(false);
-        return post;
-    }
+  OpenerMapper openerMapper;
 
-    public PostResponse toPostResponse(Post post) {
-        var opener = post.getAuthor();
-        var author = new OpenerResponse(
-                opener.getId(),
-                opener.getUsername(),
-                opener.getDisplayName(),
-                opener.isVerified(),
-                opener.getAvatarUrl()
-        );
-        return new PostResponse(
-                post.getId(),
-                author,
-                post.getContent(),
-                post.getViewCount(),
-                post.getLikeCount(),
-                post.getCommentCount(),
-                post.getCreatedAt()
-        );
-    }
+  public Post toPost(PostCreateRequest request, Opener author) {
+    Post post = new Post();
+    post.setContent(request.payload().content());
+    post.setDeleted(false);
+    post.setAuthor(author);
+    return post;
+  }
+
+  public PostResponse toPostResponse(Post post) {
+    var opener = post.getAuthor();
+    var author = openerMapper.toOpenerResponse(opener);
+    return new PostResponse(
+        post.getId(),
+        author,
+        post.getContent(),
+        post.getViewCount(),
+        post.getLikeCount(),
+        post.getCommentCount(),
+        post.getCreatedAt());
+  }
 }

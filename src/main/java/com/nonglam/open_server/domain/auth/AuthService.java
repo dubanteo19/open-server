@@ -15,7 +15,6 @@ import com.nonglam.open_server.domain.user.User;
 import com.nonglam.open_server.security.CustomUserDetail;
 import com.nonglam.open_server.security.JwtUtil;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +31,7 @@ import java.util.Map;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AuthService {
     final AuthRepository authRepository;
     final UserMapper userMapper;
@@ -40,6 +39,8 @@ public class AuthService {
     final AuthenticationManager authenticationManager;
     final JwtUtil jwtUtil;
     final OpenerRepository openerRepository;
+    @Value("${google.client.id}")
+    String CLIENT_ID;
 
     public LoginResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -53,7 +54,6 @@ public class AuthService {
     }
 
     public LoginResponse googleLogin(TokenRequest request) {
-        final String CLIENT_ID = "";
         var jsonFactory = new GsonFactory();
         var transport = new NetHttpTransport();
         var audience = Collections.singleton(CLIENT_ID);
