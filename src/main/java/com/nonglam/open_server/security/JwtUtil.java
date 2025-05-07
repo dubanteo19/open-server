@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -24,10 +23,7 @@ public class JwtUtil {
       @Value("${jwt.access.secret}") String accessSecret,
       @Value("${jwt.refresh.secret}") String refreshSecret,
       @Value("${jwt.access.expiration}") long accessTokenExpirationMs,
-      @Value("${jwt.refresh.expiration}") long refreshTokenExpirationMs
-  // private final long accessTokenExpirationMs = 1000L * 60 * 15;
-  // private final long refreshTokenExpirationMs = 1000L * 60 * 60 * 24 * 30;
-  ) {
+      @Value("${jwt.refresh.expiration}") long refreshTokenExpirationMs) {
     this.accessTokenKey = Keys.hmacShaKeyFor(accessSecret.getBytes());
     this.refreshTokenKey = Keys.hmacShaKeyFor(refreshSecret.getBytes());
     this.accessTokenExpirationMs = accessTokenExpirationMs;

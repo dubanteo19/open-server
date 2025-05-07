@@ -2,6 +2,7 @@ package com.nonglam.open_server.domain.post;
 
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.request.PostUpdateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
+import com.nonglam.open_server.domain.post.event.ViewPostEvent;
 import com.nonglam.open_server.domain.user.OpenerRepository;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
 import com.nonglam.open_server.shared.PageMapper;
@@ -26,9 +28,11 @@ public class PostService {
   OpenerRepository openerRepository;
   PostMapper postMapper;
   PageMapper pageMapper;
+  ApplicationEventPublisher eventPublisher;
 
   public PostResponse getPostById(Long postId) {
     var post = findById(postId);
+    eventPublisher.publishEvent(new ViewPostEvent(postId));
     return postMapper.toPostResponse(post);
   }
 
@@ -50,9 +54,9 @@ public class PostService {
   }
 
   public void deletePost(Long postId) {
-    var currentPost = findById(postId);
-    currentPost.setDeleted(true);
-    postRepository.save(currentPost);
+    var currentPostReference = postRepository.getReferenceById(postId);
+    currentPostReference.setDeleted(true);
+    postRepository.save(currentPostReference);
   }
 
   public PostResponse createPost(PostCreateRequest request) {
