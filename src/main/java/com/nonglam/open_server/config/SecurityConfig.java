@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,14 +28,17 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.List;
 
 @Configuration
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.security.enabled", havingValue = "true", matchIfMissing = true)
 @EnableWebSecurity
 public class SecurityConfig {
-  UserDetailsService userDetailsService;
-  JwtFilter jwtFilter;
-  Bcrypt bcrypt;
+
+  @Value("${frontend.allowed-origins}")
+   String allowedOrigins;
+  final UserDetailsService userDetailsService;
+  final JwtFilter jwtFilter;
+  final Bcrypt bcrypt;
 
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -59,7 +63,7 @@ public class SecurityConfig {
   CorsFilter corsFilter() {
     CorsConfiguration config = new CorsConfiguration();
     config.setAllowCredentials(true);
-    config.setAllowedOrigins(List.of("http://localhost:5173", "http://dbt19.ddns.net:90"));
+    config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
     config.setAllowedHeaders(List.of("*"));
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

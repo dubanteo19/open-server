@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.request.PostUpdateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
+import com.nonglam.open_server.domain.post.event.PostCreateEvent;
 import com.nonglam.open_server.domain.post.event.ViewPostEvent;
 import com.nonglam.open_server.domain.user.OpenerRepository;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
@@ -65,6 +66,7 @@ public class PostService {
         .orElseThrow(ResourceNotFoundException::openerNotFound);
     var post = postMapper.toPost(request, opener);
     var savedPost = postRepository.save(post);
+    eventPublisher.publishEvent(new PostCreateEvent(savedPost, savedPost.getAuthor().getId()));
     return postMapper.toPostResponse(savedPost);
   }
 
