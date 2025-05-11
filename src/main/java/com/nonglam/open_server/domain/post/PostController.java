@@ -35,10 +35,6 @@ public class PostController {
     return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success("fetched post", res));
   }
 
-  @GetMapping("/hello")
-  public String hello() {
-    return "hello world";
-  }
 
   @DeleteMapping("/{postId}")
   public ResponseEntity<APIResponse<Void>> deletePost(@PathVariable Long postId) {
@@ -60,7 +56,7 @@ public class PostController {
 
   @GetMapping
   public ResponseEntity<APIResponse<PagedResponse<PostResponse>>> getPosts(@RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size) {
+     @RequestParam(defaultValue = "10") int size) {
     PagedResponse<PostResponse> response = postService.getPosts(page, size);
     return ResponseEntity.ok(APIResponse.success("Fetched posts", response));
   }

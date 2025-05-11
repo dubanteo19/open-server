@@ -33,6 +33,7 @@ public class PostMapper {
         post.getViewCount(),
         post.getLikeCount(),
         post.getCommentCount(),
+        post.getSentiment(),
         post.getCreatedAt());
   }
 }

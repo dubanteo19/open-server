@@ -5,6 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,16 +28,20 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.List;
 
 @Configuration
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.security.enabled", havingValue = "true", matchIfMissing = true)
 @EnableWebSecurity
 public class SecurityConfig {
-  UserDetailsService userDetailsService;
-  JwtFilter jwtFilter;
-  Bcrypt bcrypt;
+
+  @Value("${frontend.allowed-origins}")
+   String allowedOrigins;
+  final UserDetailsService userDetailsService;
+  final JwtFilter jwtFilter;
+  final Bcrypt bcrypt;
 
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     return http
         .csrf(csrf -> csrf.disable())
         .cors(Customizer.withDefaults())
@@ -42,9 +49,10 @@ public class SecurityConfig {
             sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/v1/auth/**").permitAll()
-            .requestMatchers("/ws/**").permitAll()
+            .requestMatchers("/ws", "/ws/**").permitAll()
             .anyRequest().authenticated())
-        .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+        .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response,
+            authException) -> {
           response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
         }))
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -52,13 +60,12 @@ public class SecurityConfig {
   }
 
   @Bean
-  public CorsFilter corsFilter() {
+  CorsFilter corsFilter() {
     CorsConfiguration config = new CorsConfiguration();
     config.setAllowCredentials(true);
-    config.setAllowedOrigins(List.of("http://localhost:5173", "http://dbt19.ddns.net:90"));
+    config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
     config.setAllowedHeaders(List.of("*"));
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
 
@@ -66,7 +73,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public AuthenticationProvider authenticationProvider() {
+  AuthenticationProvider authenticationProvider() {
     DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
     provider.setUserDetailsService(userDetailsService);
     provider.setPasswordEncoder(bcrypt.passwordEncoder());
@@ -74,7 +81,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(
+  AuthenticationManager authenticationManager(
       AuthenticationConfiguration config) throws Exception {
     return config.getAuthenticationManager();
   }

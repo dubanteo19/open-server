@@ -6,7 +6,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -17,16 +18,17 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CommentListener {
   SimpMessagingTemplate messagingTemplate;
-  Gson gson;
+  ObjectMapper objectMapper;
 
   @Async
   @EventListener
   public void hanldeCommentCreated(CommentCreatedEvent event) {
     String topic = "/topic/posts/" + event.postId() + "/comments";
-    String payload = gson.toJson(event);
-    System.out.println(topic);
-    System.out.println(payload);
-    messagingTemplate.convertAndSend(topic, payload);
-    System.out.println("send event successfully");
+    try {
+      String payload = objectMapper.writeValueAsString(event);
+      messagingTemplate.convertAndSend(topic, payload);
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+    }
   }
 }

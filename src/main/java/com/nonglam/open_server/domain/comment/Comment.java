@@ -6,9 +6,11 @@ import com.nonglam.open_server.domain.user.Opener;
 import com.nonglam.open_server.shared.Auditable;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = false)
 public class Comment extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
