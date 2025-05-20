@@ -1,13 +1,15 @@
 package com.nonglam.open_server.domain.post;
 
+import org.springframework.stereotype.Component;
+
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
 import com.nonglam.open_server.domain.user.Opener;
 import com.nonglam.open_server.domain.user.OpenerMapper;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
@@ -15,9 +17,10 @@ import org.springframework.stereotype.Component;
 public class PostMapper {
   OpenerMapper openerMapper;
 
-  public Post toPost(PostCreateRequest request, Opener author) {
+  public Post toPost(PostCreateRequest request, Opener author, long simHash) {
     Post post = new Post();
     post.setContent(request.payload().content());
+    post.setSimHash(simHash);
     post.setDeleted(false);
     post.setAuthor(author);
     return post;

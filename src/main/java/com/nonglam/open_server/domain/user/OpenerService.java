@@ -5,7 +5,9 @@ import com.nonglam.open_server.domain.post.PostRepository;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
 import com.nonglam.open_server.domain.user.dto.request.OpenerUpdateRequest;
 import com.nonglam.open_server.domain.user.dto.response.OpenerDetail;
+import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
+import com.nonglam.open_server.shared.ErrorCode;
 import com.nonglam.open_server.shared.PageMapper;
 import com.nonglam.open_server.shared.PagedResponse;
 import lombok.AccessLevel;
@@ -13,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -68,4 +71,17 @@ public class OpenerService {
     var savedOpener = openerRepository.save(currentOpener);
     return openerMapper.toOpenerDetail(savedOpener);
   }
+
+  public void flagAsSpammer(Long openerId) {
+    var opener = findById(openerId);
+    opener.flagAsSpammer();
+    if (opener.getSpamFlagCount() >= 3) {
+      opener.setBlocked(true);
+      openerRepository.save(opener);
+      SecurityContextHolder.clearContext();
+      throw new ApiException("Your account's blocked", ErrorCode.OPENER_BLOCKED);
+    }
+    openerRepository.save(opener);
+  }
+
 }
