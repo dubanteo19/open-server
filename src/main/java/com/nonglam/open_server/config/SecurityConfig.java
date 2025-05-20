@@ -1,6 +1,8 @@
 package com.nonglam.open_server.config;
 
 import com.nonglam.open_server.security.JwtFilter;
+import com.nonglam.open_server.security.filter.RateLimitingFilter;
+
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +37,10 @@ import java.util.List;
 public class SecurityConfig {
 
   @Value("${frontend.allowed-origins}")
-   String allowedOrigins;
+  String allowedOrigins;
   final UserDetailsService userDetailsService;
   final JwtFilter jwtFilter;
+  final RateLimitingFilter rateLimitingFilter;
   final Bcrypt bcrypt;
 
   @Bean
@@ -56,6 +59,7 @@ public class SecurityConfig {
           response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
         }))
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(rateLimitingFilter, JwtFilter.class)
         .build();
   }
 
@@ -65,6 +69,7 @@ public class SecurityConfig {
     config.setAllowCredentials(true);
     config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
     config.setAllowedHeaders(List.of("*"));
+    config.setAllowCredentials(true);
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);

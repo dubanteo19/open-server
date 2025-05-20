@@ -22,11 +22,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class AuthController {
   AuthService authService;
 
-  @GetMapping("test")
-  public String test() {
-    return "test hello";
-  }
-
   @GetMapping("/me")
   public ResponseEntity<APIResponse<UserResponse>> me(@AuthenticationPrincipal CustomUserDetail userDetail) {
     var user = userDetail.getUser();

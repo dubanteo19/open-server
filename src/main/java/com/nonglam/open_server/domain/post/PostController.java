@@ -2,6 +2,7 @@ package com.nonglam.open_server.domain.post;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +17,12 @@ import com.nonglam.open_server.domain.auth.APIResponse;
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.request.PostUpdateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
+import com.nonglam.open_server.domain.user.OpenerService;
+import com.nonglam.open_server.exception.ApiException;
+import com.nonglam.open_server.security.CustomUserDetail;
+import com.nonglam.open_server.shared.ErrorCode;
 import com.nonglam.open_server.shared.PagedResponse;
+import com.nonglam.open_server.shared.ratelimiter.PostRateLimiterService;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -28,13 +34,14 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PostController {
   PostService postService;
+  OpenerService openerService;
+  PostRateLimiterService postRateLimiterService;
 
   @GetMapping("/{postId}")
   public ResponseEntity<APIResponse<PostResponse>> getPostById(@PathVariable Long postId) {
     var res = postService.getPostById(postId);
     return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success("fetched post", res));
   }
-
 
   @DeleteMapping("/{postId}")
   public ResponseEntity<APIResponse<Void>> deletePost(@PathVariable Long postId) {
@@ -49,14 +56,20 @@ public class PostController {
   }
 
   @PostMapping
-  public ResponseEntity<APIResponse<PostResponse>> createPost(@RequestBody PostCreateRequest request) {
-    PostResponse response = postService.createPost(request);
+  public ResponseEntity<APIResponse<PostResponse>> createPost(@RequestBody PostCreateRequest request,
+      @AuthenticationPrincipal CustomUserDetail user) {
+    var openerId = user.getUser().getId();
+    if (!postRateLimiterService.isAllow(openerId)) {
+      openerService.flagAsSpammer(openerId);
+      throw new ApiException("Request rate limited", ErrorCode.REQUEST_SPAM_DETECTED);
+    }
+    var response = postService.createPost(request, openerId);
     return ResponseEntity.status(HttpStatus.CREATED).body(APIResponse.success("created post", response));
   }
 
   @GetMapping
   public ResponseEntity<APIResponse<PagedResponse<PostResponse>>> getPosts(@RequestParam(defaultValue = "0") int page,
-     @RequestParam(defaultValue = "10") int size) {
+      @RequestParam(defaultValue = "10") int size) {
     PagedResponse<PostResponse> response = postService.getPosts(page, size);
     return ResponseEntity.ok(APIResponse.success("Fetched posts", response));
   }

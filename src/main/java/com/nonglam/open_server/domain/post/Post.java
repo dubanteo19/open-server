@@ -1,18 +1,26 @@
 package com.nonglam.open_server.domain.post;
 
-import com.nonglam.open_server.domain.comment.Comment;
-import com.nonglam.open_server.domain.user.Opener;
-import com.nonglam.open_server.shared.Auditable;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.experimental.FieldDefaults;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.nonglam.open_server.domain.comment.Comment;
+import com.nonglam.open_server.domain.user.Opener;
+import com.nonglam.open_server.shared.Auditable;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.FieldDefaults;
 
 @Entity
 @Data
@@ -29,19 +37,15 @@ public class Post extends Auditable {
   @OneToMany(mappedBy = "post")
   List<Comment> comments = new ArrayList<>();
 
-  @PrePersist
-  public void onCreated() {
-    deleted = false;
-  }
-
   int sentiment = -1;
   @ManyToMany(mappedBy = "likedPosts")
   Set<Opener> likedByOpeners = new HashSet<>();
 
   @ManyToMany(mappedBy = "bookmarkedPosts")
   Set<Opener> bookmarkedByOpeners = new HashSet<>();
-  boolean deleted;
 
+  boolean deleted = false;
+  long simHash;
   int viewCount = 0;
   int likeCount = 0;
   int commentCount = 0;
