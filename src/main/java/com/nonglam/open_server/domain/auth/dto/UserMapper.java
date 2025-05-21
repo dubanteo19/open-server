@@ -8,17 +8,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-    public Opener toOpener(RegisterRequest request) {
-        var opener = new Opener();
-        opener.setEmail(request.email());
-        opener.setDisplayName(request.displayName());
-        opener.setUsername(request.username());
-        return opener;
-    }
+  public Opener toOpener(RegisterRequest request) {
+    var opener = new Opener();
+    opener.setEmail(request.email());
+    opener.setDisplayName(request.displayName());
+    opener.setUsername(request.username());
+    return opener;
+  }
 
-    public UserResponse toUserResponse(User user) {
-        return new UserResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getAvatarUrl());
+  public UserResponse toUserResponse(User user) {
+    return new UserResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getAvatarUrl());
 
-    }
+  }
 
 }

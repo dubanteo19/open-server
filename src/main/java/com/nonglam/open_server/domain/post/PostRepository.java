@@ -33,7 +33,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   void incrementCommentCount(@Param("postId") Long postId);
 
   @Transactional
-  @Modifying
+  @Modifying(clearAutomatically = true)
   @Query("UPDATE Post p SET p.likeCount = p.likeCount +1 WHERE p.id = :postId")
   void incrementLikeCount(@Param("postId") Long postId);
 

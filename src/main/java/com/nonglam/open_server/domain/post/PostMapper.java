@@ -18,11 +18,7 @@ public class PostMapper {
   OpenerMapper openerMapper;
 
   public Post toPost(PostCreateRequest request, Opener author, long simHash) {
-    Post post = new Post();
-    post.setContent(request.payload().content());
-    post.setSimHash(simHash);
-    post.setDeleted(false);
-    post.setAuthor(author);
+    Post post = new Post(request.payload().content(), author, simHash);
     return post;
   }
 

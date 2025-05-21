@@ -43,6 +43,14 @@ public class PostController {
     return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success("fetched post", res));
   }
 
+  @PostMapping("/{postId}/like")
+  public ResponseEntity<APIResponse<Long>> likePost(@PathVariable Long postId,
+      @AuthenticationPrincipal CustomUserDetail userDetail) {
+    var userId = userDetail.getUser().getId();
+    Long likedPostId = postService.likePost(postId, userId);
+    return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success("post liked", likedPostId));
+  }
+
   @DeleteMapping("/{postId}")
   public ResponseEntity<APIResponse<Void>> deletePost(@PathVariable Long postId) {
     postService.deletePost(postId);

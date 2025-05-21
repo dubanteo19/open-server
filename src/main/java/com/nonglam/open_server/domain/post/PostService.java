@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.request.PostUpdateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
+import com.nonglam.open_server.domain.post.event.LikePostEvent;
 import com.nonglam.open_server.domain.post.event.PostCreateEvent;
 import com.nonglam.open_server.domain.post.event.ViewPostEvent;
+import com.nonglam.open_server.domain.postlike.PostLike;
+import com.nonglam.open_server.domain.postlike.PostLikeRepository;
 import com.nonglam.open_server.domain.user.OpenerService;
 import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
@@ -29,6 +32,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PostService {
   PostRepository postRepository;
+  PostLikeRepository postLikeRepository;
   OpenerService openerService;
   PostMapper postMapper;
   PageMapper pageMapper;
@@ -59,7 +63,7 @@ public class PostService {
 
   public void deletePost(Long postId) {
     var currentPostReference = postRepository.getReferenceById(postId);
-    currentPostReference.setDeleted(true);
+    currentPostReference.markAsDeleted();
     postRepository.save(currentPostReference);
   }
 
@@ -89,11 +93,20 @@ public class PostService {
   }
 
   public PostResponse updatePost(PostUpdateRequest request) {
-    var postId = request.postId();
-    var content = request.payload().content();
+    Long postId = request.postId();
+    String content = request.payload().content();
     var currentPost = findById(postId);
-    currentPost.setContent(content);
+    currentPost.updateContent(content);
     var savedPost = postRepository.save(currentPost);
     return postMapper.toPostResponse(savedPost);
+  }
+
+  public Long likePost(Long postId, Long userId) {
+    var post = findById(postId);
+    var opener = openerService.findById(userId);
+    var postLike = PostLike.builder().post(post).opener(opener).build();
+    postLikeRepository.save(postLike);
+    eventPublisher.publishEvent(new LikePostEvent(postId));
+    return postId;
   }
 }

@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -74,7 +76,7 @@ public class PostListener {
     } catch (ResourceAccessException e) {
       log.warn("Sentiment prediction service is not available");
     }
-    post.setSentiment(sentiment);
+    post.updateSentitment(sentiment);
     postRepository.save(post);
   }
 
@@ -82,6 +84,12 @@ public class PostListener {
   @EventListener
   public void handleUpdateCommentCount(CommentCreatedEvent event) {
     postRepository.incrementCommentCount(event.postId());
+  }
+
+  @EventListener
+  @Async
+  public void handleLikePost(LikePostEvent event) {
+    postRepository.incrementLikeCount(event.id());
   }
 
   @Async
