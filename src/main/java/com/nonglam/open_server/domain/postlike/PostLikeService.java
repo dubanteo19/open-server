@@ -18,26 +18,26 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 
 public class PostLikeService {
-        PostLikeRepository postLikeRepository;
-        PostService postService;
-        OpenerService openerService;
-        ApplicationEventPublisher eventPublisher;
+  PostLikeRepository postLikeRepository;
+  PostService postService;
+  OpenerService openerService;
+  ApplicationEventPublisher eventPublisher;
 
-        public Long unlikePost(Long postId, Long userId) {
-                var postLike = postLikeRepository
-                                .findByPostIdAndOpenerId(postId, userId)
-                                .orElseThrow(() -> new ResourceNotFoundException("postlike not found"));
-                postLikeRepository.delete(postLike);
-                eventPublisher.publishEvent(new UnlikePostEvent(postId));
-                return postId;
-        }
+  public Long unlikePost(Long postId, Long userId) {
+    var postLike = postLikeRepository
+        .findByPostIdAndOpenerId(postId, userId)
+        .orElseThrow(() -> new ResourceNotFoundException("postlike not found"));
+    postLikeRepository.delete(postLike);
+    eventPublisher.publishEvent(new UnlikePostEvent(postId));
+    return postId;
+  }
 
-        public Long likePost(Long postId, Long userId) {
-                var post = postService.findById(postId);
-                var opener = openerService.findById(userId);
-                var postLike = PostLike.builder().post(post).opener(opener).build();
-                postLikeRepository.save(postLike);
-                eventPublisher.publishEvent(new LikePostEvent(postId));
-                return postId;
-        }
+  public Long likePost(Long postId, Long userId) {
+    var post = postService.findById(postId);
+    var opener = openerService.findById(userId);
+    var postLike = PostLike.builder().post(post).opener(opener).build();
+    postLikeRepository.save(postLike);
+    eventPublisher.publishEvent(new LikePostEvent(postId));
+    return postId;
+  }
 }

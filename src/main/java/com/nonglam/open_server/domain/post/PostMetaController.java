@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nonglam.open_server.domain.auth.APIResponse;
+import com.nonglam.open_server.domain.postbookmark.PostBookmarkService;
 import com.nonglam.open_server.domain.postlike.PostLikeService;
 import com.nonglam.open_server.security.CustomUserDetail;
 
@@ -20,6 +21,23 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PostMetaController {
   private final PostLikeService postLikeService;
+  private final PostBookmarkService postBookmarkService;
+
+  @PostMapping("/bookmark")
+  public ResponseEntity<Void> bookmarkPost(@PathVariable Long postId,
+      @AuthenticationPrincipal CustomUserDetail userDetail) {
+    var userId = userDetail.getUser().getId();
+    postBookmarkService.bookmarkPost(postId, userId);
+    return ResponseEntity.ok().build();
+  }
+
+  @DeleteMapping("/unbookmark")
+  public ResponseEntity<Void> unBookmarkPost(@PathVariable Long postId,
+      @AuthenticationPrincipal CustomUserDetail userDetail) {
+    var userId = userDetail.getUser().getId();
+    postBookmarkService.unBookmarkPost(postId, userId);
+    return ResponseEntity.ok().build();
+  }
 
   @PostMapping("/like")
   public ResponseEntity<APIResponse<Long>> likePost(@PathVariable Long postId,

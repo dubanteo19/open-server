@@ -3,8 +3,6 @@ package com.nonglam.open_server.domain.image;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.management.Query;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;

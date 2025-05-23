@@ -59,9 +59,13 @@ public class PostService {
   }
 
   public Post findById(Long postId) {
-    return postRepository
+    var post = postRepository
         .findById(postId)
         .orElseThrow((() -> new ResourceNotFoundException("Post not found")));
+    if (post.isDeleted()) {
+      throw new IllegalStateException("Post delted");
+    }
+    return post;
   }
 
   public void deletePost(Long postId) {
