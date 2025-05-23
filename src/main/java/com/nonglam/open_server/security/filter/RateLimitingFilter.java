@@ -20,10 +20,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Component
+@Log4j2
 public class RateLimitingFilter extends OncePerRequestFilter {
   RateLimiterService rateLimiterService;
   private final static String COOKIE_NAME = "client_id";
@@ -35,6 +37,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     if (!rateLimiterService.isAllow(clientId)) {
       response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
       response.getWriter().write("Too many request. try later");
+      log.debug("too many request");
       return;
     }
 

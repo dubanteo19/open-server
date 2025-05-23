@@ -37,6 +37,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   @Query("UPDATE Post p SET p.likeCount = p.likeCount +1 WHERE p.id = :postId")
   void incrementLikeCount(@Param("postId") Long postId);
 
+  @Transactional
+  @Modifying(clearAutomatically = true)
+  @Query("UPDATE Post p SET p.likeCount = p.likeCount -1 WHERE p.id = :postId")
+  void decrementLikeCount(@Param("postId") Long postId);
+
   List<Post> findByAuthorIdOrderByCreatedAtDesc(Long authorId, Pageable pageable);
+
+  @Query("SELECT p FROM Post p WHERE p.deleted=false ORDER BY p.id DESC")
+  List<Post> findTopNOrderByIdDesc(Pageable pageable);
+
+  @Query("SELECT p FROM Post p WHERE p.id < :after ORDER BY p.id DESC")
+  List<Post> findTopNByIdLessThanOrderThanDesc(@Param("after") Long after, Pageable pageable);
 
 }

@@ -33,6 +33,24 @@ public class PostMapper {
         post.getLikeCount(),
         post.getCommentCount(),
         post.getSentiment(),
+        false,
+        false,
+        post.getCreatedAt());
+  }
+
+  public PostResponse toPostResponse(Post post, boolean liked, boolean mine) {
+    var opener = post.getAuthor();
+    var author = openerMapper.toOpenerResponse(opener);
+    return new PostResponse(
+        post.getId(),
+        author,
+        post.getContent(),
+        post.getViewCount(),
+        post.getLikeCount(),
+        post.getCommentCount(),
+        post.getSentiment(),
+        liked,
+        mine,
         post.getCreatedAt());
   }
 }

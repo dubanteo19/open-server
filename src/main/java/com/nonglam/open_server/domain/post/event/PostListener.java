@@ -10,8 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -90,6 +88,12 @@ public class PostListener {
   @Async
   public void handleLikePost(LikePostEvent event) {
     postRepository.incrementLikeCount(event.id());
+  }
+
+  @EventListener
+  @Async
+  public void handleUnlikePost(UnlikePostEvent event) {
+    postRepository.decrementLikeCount(event.id());
   }
 
   @Async

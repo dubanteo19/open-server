@@ -1,6 +1,5 @@
 package com.nonglam.open_server.domain.comment.event;
 
-import org.aspectj.lang.annotation.Aspect;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;

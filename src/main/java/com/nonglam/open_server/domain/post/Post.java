@@ -68,4 +68,8 @@ public class Post extends Auditable {
     this.sentiment = newSentitment;
   }
 
+  public boolean isAuthor(Opener opener) {
+    return author.getId() == opener.getId();
+  }
+
 }

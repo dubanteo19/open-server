@@ -15,7 +15,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RateLimiterService {
   Map<String, Deque<Long>> userPostTimestamps = new ConcurrentHashMap<>();
-  static int LIMIT = 30;
+  static int LIMIT = 60;
   static long TIME_WINDOW_MILLIS = 60 * 1000;
 
   public boolean isAllow(String clientId) {

@@ -4,23 +4,18 @@ import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.request.PostUpdateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
-import com.nonglam.open_server.domain.post.event.LikePostEvent;
 import com.nonglam.open_server.domain.post.event.PostCreateEvent;
 import com.nonglam.open_server.domain.post.event.ViewPostEvent;
-import com.nonglam.open_server.domain.postlike.PostLike;
-import com.nonglam.open_server.domain.postlike.PostLikeRepository;
 import com.nonglam.open_server.domain.user.OpenerService;
 import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
+import com.nonglam.open_server.shared.CursorPagedResponse;
 import com.nonglam.open_server.shared.ErrorCode;
-import com.nonglam.open_server.shared.PageMapper;
-import com.nonglam.open_server.shared.PagedResponse;
 import com.nonglam.open_server.shared.SimHashUtil;
 
 import lombok.AccessLevel;
@@ -32,27 +27,35 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PostService {
   PostRepository postRepository;
-  PostLikeRepository postLikeRepository;
   OpenerService openerService;
   PostMapper postMapper;
-  PageMapper pageMapper;
+  PostMetaDataEnricher postMetaDataEnricher;
   ApplicationEventPublisher eventPublisher;
 
-  public PostResponse getPostById(Long postId) {
+  public PostResponse getPostById(Long postId, Long openerId) {
     var post = findById(postId);
-    eventPublisher.publishEvent(new ViewPostEvent(postId));
-    return postMapper.toPostResponse(post);
+    var opener = openerService.findById(openerId);
+    return postMetaDataEnricher.enrich(post, opener);
   }
 
-  public PagedResponse<PostResponse> getPosts(int page, int size) {
-    var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-    var postPage = postRepository.findAllByDeleted(false, pageable);
-    List<PostResponse> postResponses = postPage
-        .getContent()
-        .stream()
-        .map(postMapper::toPostResponse)
-        .toList();
-    return pageMapper.toPagedResponse(postPage, postResponses);
+  public CursorPagedResponse<PostResponse> getPosts(Long after, Long openerId) {
+    final int fixedSize = 5;
+    int fetchSize = fixedSize + 1;
+    PageRequest pageRequest = PageRequest.of(0, fetchSize);
+    List<Post> fetchedPosts;
+    List<Post> posts;
+    if (after == null) {
+      fetchedPosts = postRepository.findTopNOrderByIdDesc(pageRequest);
+    } else {
+      fetchedPosts = postRepository.findTopNByIdLessThanOrderThanDesc(after, pageRequest);
+    }
+    int fetchedSize = fetchedPosts.size();
+    boolean hasMore = fetchedSize > fixedSize;
+    posts = hasMore ? fetchedPosts.subList(0, fixedSize) : fetchedPosts;
+    Long nextCursor = hasMore ? fetchedPosts.get(posts.size() - 1).getId() : null;
+    var opener = openerService.findById(openerId);
+    var postResponseList = postMetaDataEnricher.enrich(posts, opener);
+    return new CursorPagedResponse<>(postResponseList, hasMore, nextCursor);
   }
 
   public Post findById(Long postId) {
@@ -101,12 +104,8 @@ public class PostService {
     return postMapper.toPostResponse(savedPost);
   }
 
-  public Long likePost(Long postId, Long userId) {
-    var post = findById(postId);
-    var opener = openerService.findById(userId);
-    var postLike = PostLike.builder().post(post).opener(opener).build();
-    postLikeRepository.save(postLike);
-    eventPublisher.publishEvent(new LikePostEvent(postId));
-    return postId;
+  public void viewPost(Long postId) {
+    eventPublisher.publishEvent(new ViewPostEvent(postId));
   }
+
 }
