@@ -74,7 +74,7 @@ public class PostListener {
     } catch (ResourceAccessException e) {
       log.warn("Sentiment prediction service is not available");
     }
-    post.setSentiment(sentiment);
+    post.updateSentitment(sentiment);
     postRepository.save(post);
   }
 
@@ -82,6 +82,18 @@ public class PostListener {
   @EventListener
   public void handleUpdateCommentCount(CommentCreatedEvent event) {
     postRepository.incrementCommentCount(event.postId());
+  }
+
+  @EventListener
+  @Async
+  public void handleLikePost(LikePostEvent event) {
+    postRepository.incrementLikeCount(event.id());
+  }
+
+  @EventListener
+  @Async
+  public void handleUnlikePost(UnlikePostEvent event) {
+    postRepository.decrementLikeCount(event.id());
   }
 
   @Async

@@ -91,6 +91,10 @@ public class AuthService {
             newOpener.setRegisteredWithGoogle(true);
             return openerRepository.save(newOpener);
           });
+
+      if (opener.isBlocked()) {
+        throw new ApiException("opener's account blocked", ErrorCode.OPENER_BLOCKED);
+      }
       var userResponse = userMapper.toUserResponse(opener);
       String accessToken = jwtUtil.generateAccessToken(opener.getEmail(), Map.of("role", opener.getRole()));
       String refreshToken = jwtUtil.generateRefreshToken(opener.getEmail());

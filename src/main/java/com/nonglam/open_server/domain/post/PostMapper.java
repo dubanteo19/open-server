@@ -18,11 +18,7 @@ public class PostMapper {
   OpenerMapper openerMapper;
 
   public Post toPost(PostCreateRequest request, Opener author, long simHash) {
-    Post post = new Post();
-    post.setContent(request.payload().content());
-    post.setSimHash(simHash);
-    post.setDeleted(false);
-    post.setAuthor(author);
+    Post post = new Post(request.payload().content(), author, simHash);
     return post;
   }
 
@@ -37,6 +33,24 @@ public class PostMapper {
         post.getLikeCount(),
         post.getCommentCount(),
         post.getSentiment(),
+        false,
+        false,
+        post.getCreatedAt());
+  }
+
+  public PostResponse toPostResponse(Post post, boolean liked, boolean mine) {
+    var opener = post.getAuthor();
+    var author = openerMapper.toOpenerResponse(opener);
+    return new PostResponse(
+        post.getId(),
+        author,
+        post.getContent(),
+        post.getViewCount(),
+        post.getLikeCount(),
+        post.getCommentCount(),
+        post.getSentiment(),
+        liked,
+        mine,
         post.getCreatedAt());
   }
 }
