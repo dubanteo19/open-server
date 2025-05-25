@@ -1,29 +1,49 @@
 package com.nonglam.open_server.domain.user;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.nonglam.open_server.domain.auth.APIResponse;
+import com.nonglam.open_server.domain.post.PostQueryService;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
 import com.nonglam.open_server.domain.user.dto.request.OpenerUpdateRequest;
 import com.nonglam.open_server.domain.user.dto.response.OpenerDetail;
-import com.nonglam.open_server.shared.PagedResponse;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.nonglam.open_server.security.CustomUserDetail;
+import com.nonglam.open_server.shared.CursorPagedResponse;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("api/v1/openers")
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class OpenerController {
-  OpenerService openerService;
+  private final OpenerService openerService;
+  private final PostQueryService postQueryService;
 
   @GetMapping("/{username}/posts")
-  public ResponseEntity<APIResponse<PagedResponse<PostResponse>>> getOpenerPosts(@PathVariable String username,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size) {
-    var posts = openerService.getOpenerPosts(username, page, size);
+  public ResponseEntity<APIResponse<CursorPagedResponse<PostResponse>>> getOpenerPosts(
+      @PathVariable String username,
+      @RequestParam(required = false) Long after,
+      @AuthenticationPrincipal CustomUserDetail user) {
+    var posts = postQueryService.getPostByAuthor(username, after, user.getUser().getId());
     return ResponseEntity.ok(APIResponse.success("fetched opener's posts", posts));
+  }
+
+  @GetMapping("/bookmarked-posts")
+  public ResponseEntity<APIResponse<CursorPagedResponse<PostResponse>>> getBookmarkedPosts(
+      @AuthenticationPrincipal CustomUserDetail user,
+      @RequestParam(required = false) Long after) {
+    var bookmarkedPosts = postQueryService.getBookmarkedPosts(user.getUser().getId(), after);
+    return ResponseEntity.ok(APIResponse.success("fetched opener's likedPostIds", bookmarkedPosts));
   }
 
   @PutMapping("/{openerId}")

@@ -12,52 +12,57 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.nonglam.open_server.domain.comment.Comment;
 import com.nonglam.open_server.domain.notification.Notification;
 import com.nonglam.open_server.domain.post.Post;
+import com.nonglam.open_server.domain.postbookmark.PostBookmark;
+import com.nonglam.open_server.domain.postlike.PostLike;
+import com.nonglam.open_server.domain.userfollow.OpenerFollow;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import lombok.AccessLevel;
-import lombok.Data;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.experimental.FieldDefaults;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@EntityListeners(AuditingEntityListener.class)
 @Entity
 @DiscriminatorValue("OPENER")
-@EntityListeners(AuditingEntityListener.class)
-@Data
 @EqualsAndHashCode(callSuper = true)
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Opener extends User {
   @OneToMany(mappedBy = "author")
-  List<Post> posts = new ArrayList<>();
+  private List<Post> posts = new ArrayList<>();
   @OneToMany(mappedBy = "author")
-  List<Comment> comments = new ArrayList<>();
+  private List<Comment> comments = new ArrayList<>();
   @OneToMany(mappedBy = "opener")
-  List<Notification> notifications = new ArrayList<>();
+  private List<Notification> notifications = new ArrayList<>();
   @Column(length = 500)
-  String bio = "No bio";
-  boolean verified;
-  String location = "VietNam";
-  int spamFlagCount;
+  private String bio = "No bio";
+  private boolean verified;
+  private String location = "VietNam";
+  private int spamFlagCount;
   @CreatedDate
   @Column(name = "join_date", updatable = false)
-  LocalDateTime joinDate;
-  @ManyToMany
-  @JoinTable(name = "opener_liked_posts", joinColumns = @JoinColumn(name = "opener_id"), inverseJoinColumns = @JoinColumn(name = "post_id"))
-  Set<Post> likedPosts = new HashSet<>();
-  @ManyToMany
-  @JoinTable(name = "opener_bookmarked_posts", joinColumns = @JoinColumn(name = "opener_id"), inverseJoinColumns = @JoinColumn(name = "post_id"))
-  Set<Post> bookmarkedPosts = new HashSet<>();
-  @ManyToMany
-  @JoinTable(name = "opener_following", joinColumns = @JoinColumn(name = "follower_id"), inverseJoinColumns = @JoinColumn(name = "following_id"))
-  Set<Opener> following = new HashSet<>();
-  @ManyToMany(mappedBy = "following")
-  Set<Opener> followers = new HashSet<>();
+  private LocalDateTime joinDate;
+  @OneToMany(mappedBy = "opener", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<PostLike> postLikes = new HashSet<>();
+  @OneToMany(mappedBy = "opener", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<PostBookmark> postBookmakrs = new HashSet<>();
+  @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<OpenerFollow> following = new HashSet<>();
+  @OneToMany(mappedBy = "followed", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<OpenerFollow> followers = new HashSet<>();
+
+  public void updateInfo(String bio, String displayName, String location) {
+    this.bio = bio;
+    super.setDisplayName(displayName);
+    this.location = location;
+  }
 
   public void flagAsSpammer() {
     this.spamFlagCount++;

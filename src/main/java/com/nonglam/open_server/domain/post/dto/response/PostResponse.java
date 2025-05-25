@@ -12,5 +12,8 @@ public record PostResponse(
     int likeCount,
     int commentCount,
     int sentiment,
+    boolean liked,
+    boolean bookmarked,
+    boolean mine,
     LocalDateTime updatedAt) {
 }

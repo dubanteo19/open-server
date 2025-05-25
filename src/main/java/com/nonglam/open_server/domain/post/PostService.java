@@ -1,10 +1,7 @@
 package com.nonglam.open_server.domain.post;
 
-import java.util.List;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
@@ -16,8 +13,6 @@ import com.nonglam.open_server.domain.user.OpenerService;
 import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
 import com.nonglam.open_server.shared.ErrorCode;
-import com.nonglam.open_server.shared.PageMapper;
-import com.nonglam.open_server.shared.PagedResponse;
 import com.nonglam.open_server.shared.SimHashUtil;
 
 import lombok.AccessLevel;
@@ -31,35 +26,28 @@ public class PostService {
   PostRepository postRepository;
   OpenerService openerService;
   PostMapper postMapper;
-  PageMapper pageMapper;
+  PostMetaDataEnricher postMetaDataEnricher;
   ApplicationEventPublisher eventPublisher;
 
-  public PostResponse getPostById(Long postId) {
+  public PostResponse getPostById(Long postId, Long openerId) {
     var post = findById(postId);
-    eventPublisher.publishEvent(new ViewPostEvent(postId));
-    return postMapper.toPostResponse(post);
-  }
-
-  public PagedResponse<PostResponse> getPosts(int page, int size) {
-    var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-    var postPage = postRepository.findAllByDeleted(false, pageable);
-    List<PostResponse> postResponses = postPage
-        .getContent()
-        .stream()
-        .map(postMapper::toPostResponse)
-        .toList();
-    return pageMapper.toPagedResponse(postPage, postResponses);
+    var opener = openerService.findById(openerId);
+    return postMetaDataEnricher.enrich(post, opener);
   }
 
   public Post findById(Long postId) {
-    return postRepository
+    var post = postRepository
         .findById(postId)
         .orElseThrow((() -> new ResourceNotFoundException("Post not found")));
+    if (post.isDeleted()) {
+      throw new IllegalStateException("Post delted");
+    }
+    return post;
   }
 
   public void deletePost(Long postId) {
     var currentPostReference = postRepository.getReferenceById(postId);
-    currentPostReference.setDeleted(true);
+    currentPostReference.markAsDeleted();
     postRepository.save(currentPostReference);
   }
 
@@ -89,11 +77,16 @@ public class PostService {
   }
 
   public PostResponse updatePost(PostUpdateRequest request) {
-    var postId = request.postId();
-    var content = request.payload().content();
+    Long postId = request.postId();
+    String content = request.payload().content();
     var currentPost = findById(postId);
-    currentPost.setContent(content);
+    currentPost.updateContent(content);
     var savedPost = postRepository.save(currentPost);
     return postMapper.toPostResponse(savedPost);
   }
+
+  public void viewPost(Long postId) {
+    eventPublisher.publishEvent(new ViewPostEvent(postId));
+  }
+
 }

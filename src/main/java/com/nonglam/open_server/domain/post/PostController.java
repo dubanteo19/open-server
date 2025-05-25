@@ -20,8 +20,8 @@ import com.nonglam.open_server.domain.post.dto.response.PostResponse;
 import com.nonglam.open_server.domain.user.OpenerService;
 import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.security.CustomUserDetail;
+import com.nonglam.open_server.shared.CursorPagedResponse;
 import com.nonglam.open_server.shared.ErrorCode;
-import com.nonglam.open_server.shared.PagedResponse;
 import com.nonglam.open_server.shared.ratelimiter.PostRateLimiterService;
 
 import lombok.AccessLevel;
@@ -34,13 +34,24 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PostController {
   PostService postService;
+  PostQueryService postQueryService;
   OpenerService openerService;
   PostRateLimiterService postRateLimiterService;
 
   @GetMapping("/{postId}")
-  public ResponseEntity<APIResponse<PostResponse>> getPostById(@PathVariable Long postId) {
-    var res = postService.getPostById(postId);
+  public ResponseEntity<APIResponse<PostResponse>> getPostById(
+      @PathVariable Long postId,
+      @AuthenticationPrincipal CustomUserDetail user) {
+    var res = postService.getPostById(postId, user.getUser().getId());
     return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success("fetched post", res));
+  }
+
+  @GetMapping
+  public ResponseEntity<APIResponse<CursorPagedResponse<PostResponse>>> getPosts(
+      @RequestParam(required = false) Long after,
+      @AuthenticationPrincipal CustomUserDetail user) {
+    var response = postQueryService.getFeed(after, user.getUser().getId());
+    return ResponseEntity.ok(APIResponse.success("Fetched posts", response));
   }
 
   @DeleteMapping("/{postId}")
@@ -55,6 +66,12 @@ public class PostController {
     return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success("updated post", response));
   }
 
+  @PostMapping("/{postId}")
+  public ResponseEntity<Void> viewPost(@PathVariable Long postId) {
+    postService.viewPost(postId);
+    return ResponseEntity.ok().build();
+  }
+
   @PostMapping
   public ResponseEntity<APIResponse<PostResponse>> createPost(@RequestBody PostCreateRequest request,
       @AuthenticationPrincipal CustomUserDetail user) {
@@ -65,12 +82,5 @@ public class PostController {
     }
     var response = postService.createPost(request, openerId);
     return ResponseEntity.status(HttpStatus.CREATED).body(APIResponse.success("created post", response));
-  }
-
-  @GetMapping
-  public ResponseEntity<APIResponse<PagedResponse<PostResponse>>> getPosts(@RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size) {
-    PagedResponse<PostResponse> response = postService.getPosts(page, size);
-    return ResponseEntity.ok(APIResponse.success("Fetched posts", response));
   }
 }

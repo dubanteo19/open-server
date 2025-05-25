@@ -1,30 +1,37 @@
 package com.nonglam.open_server.domain.user;
 
-import jakarta.persistence.*;
-import lombok.AccessLevel;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import lombok.Data;
-import lombok.experimental.FieldDefaults;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "user_type")
 @Data
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public abstract class User {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  Long id;
+  protected Long id;
   @Column(nullable = false, unique = true)
-  String email;
-  String username;
-  String displayName;
+  protected String email;
+  protected String username;
+  protected String displayName;
   @Column(length = 400)
-  String avatarUrl;
+  protected String avatarUrl;
   @Enumerated(EnumType.STRING)
   Role role = Role.OPENER;
-  String password;
-  boolean blocked;
+  protected String password;
+  protected boolean blocked;
   @Column(nullable = false)
-  boolean registeredWithGoogle = false;
+  protected boolean registeredWithGoogle = false;
+
 
 }
