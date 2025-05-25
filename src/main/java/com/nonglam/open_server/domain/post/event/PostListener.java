@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import com.nonglam.open_server.domain.comment.event.CommentCreatedEvent;
 import com.nonglam.open_server.domain.post.Post;
 import com.nonglam.open_server.domain.post.PostRepository;
+import com.nonglam.open_server.domain.post.PostService;
 import com.nonglam.open_server.domain.post.dto.response.SentimentPredictionResponse;
 import com.nonglam.open_server.domain.post.dto.response.SpamPredictioResponse;
 import com.nonglam.open_server.exception.ApiException;
@@ -51,6 +52,7 @@ public class PostListener {
     var post = event.post();
     var request = prepareRequest(post.getContent());
     int spam = -1;
+    int sentiment = predictSentiment(request, post);
     try {
       var spamResponse = restTemplate.postForEntity(SPAM_PREDICT_ENDPOINT, request,
           SpamPredictioResponse.class);
@@ -61,21 +63,20 @@ public class PostListener {
     if (spam == 1) {
       throw new ApiException("Post content spam detected", ErrorCode.POST_CONTENT_SPAM_DETECTED);
     }
-    predictSentiment(request, post);
+    post.updateSentitment(sentiment);
+    postRepository.save(post);
   }
 
   @Async
-  public void predictSentiment(HttpEntity<Map<String, Object>> request, Post post) {
-    int sentiment = -1;
+  public int predictSentiment(HttpEntity<Map<String, Object>> request, Post post) {
     try {
       var response = restTemplate.postForEntity(SENTIMENT_PREDICT_ENDPOINT, request,
           SentimentPredictionResponse.class);
-      sentiment = response.getBody().predictions().getFirst();
+      return response.getBody().predictions().getFirst();
     } catch (ResourceAccessException e) {
       log.warn("Sentiment prediction service is not available");
     }
-    post.updateSentitment(sentiment);
-    postRepository.save(post);
+    return -1;
   }
 
   @Async

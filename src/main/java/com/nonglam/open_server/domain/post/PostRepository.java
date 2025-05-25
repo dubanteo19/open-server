@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -40,12 +41,26 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   @Query("UPDATE Post p SET p.likeCount = p.likeCount -1 WHERE p.id = :postId")
   void decrementLikeCount(@Param("postId") Long postId);
 
-  List<Post> findByAuthorIdOrderByCreatedAtDesc(Long authorId, Pageable pageable);
+  @Query("SELECT p FROM Post p WHERE p.deleted=false ")
+  List<Post> findTopN(Pageable pageable);
 
-  @Query("SELECT p FROM Post p WHERE p.deleted=false ORDER BY p.id DESC")
-  List<Post> findTopNOrderByIdDesc(Pageable pageable);
+  @Query("""
+      SELECT p FROM Post p WHERE p.deleted=false AND (:after IS NULL OR p.id < :after)
+      """)
+  List<Post> findTopNByIdLessThan(@Param("after") Long after, Pageable pageable);
 
-  @Query("SELECT p FROM Post p WHERE p.id < :after ORDER BY p.id DESC")
-  List<Post> findTopNByIdLessThanOrderThanDesc(@Param("after") Long after, Pageable pageable);
+  @Query("SELECT p FROM Post p WHERE p.deleted=false AND p.author.username=:username ")
+  List<Post> findByAuthor(@Param("username") String username, Pageable pagerequest);
+
+  @Query("""
+      SELECT p FROM Post p
+      WHERE p.deleted=false
+      AND p.author.username=:username
+      AND (:after IS NULL OR  p.id < :after)
+      """)
+  List<Post> findByAuthorAndIdLessThan(@Param("username") String username, @Param("after") Long after,
+      Pageable pagerequest);
+
+  List<Post> findByAuthorIdOrderByCreatedAtDesc(Long openerId, PageRequest of);
 
 }

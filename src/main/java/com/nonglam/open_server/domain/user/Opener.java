@@ -60,7 +60,7 @@ public class Opener extends User {
 
   public void updateInfo(String bio, String displayName, String location) {
     this.bio = bio;
-    this.displayName = displayName;
+    super.setDisplayName(displayName);
     this.location = location;
   }
 

@@ -33,4 +33,5 @@ public abstract class User {
   @Column(nullable = false)
   protected boolean registeredWithGoogle = false;
 
+
 }

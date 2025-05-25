@@ -1,11 +1,15 @@
 package com.nonglam.open_server.domain.postlike;
 
+import java.util.List;
+
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.nonglam.open_server.domain.post.PostService;
 import com.nonglam.open_server.domain.post.event.LikePostEvent;
 import com.nonglam.open_server.domain.post.event.UnlikePostEvent;
+import com.nonglam.open_server.domain.postlike.dto.response.PostLikeResponse;
 import com.nonglam.open_server.domain.user.OpenerService;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
 
@@ -21,6 +25,7 @@ public class PostLikeService {
   PostLikeRepository postLikeRepository;
   PostService postService;
   OpenerService openerService;
+  PostLikeMapper postLikeMapper;
   ApplicationEventPublisher eventPublisher;
 
   public Long unlikePost(Long postId, Long userId) {
@@ -39,5 +44,12 @@ public class PostLikeService {
     postLikeRepository.save(postLike);
     eventPublisher.publishEvent(new LikePostEvent(postId));
     return postId;
+  }
+
+  public List<PostLikeResponse> getPostLikes(Long postId) {
+    var sort = Sort.by("likedAt").descending();
+    var postLikeList = postLikeRepository.findAllByPostId(postId, sort);
+    return postLikeMapper.toPostLikeResponseList(postLikeList);
+
   }
 }

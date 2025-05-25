@@ -1,7 +1,5 @@
 package com.nonglam.open_server.domain.post;
 
-import java.util.List;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -14,7 +12,6 @@ import com.nonglam.open_server.domain.post.event.ViewPostEvent;
 import com.nonglam.open_server.domain.user.OpenerService;
 import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
-import com.nonglam.open_server.shared.CursorPagedResponse;
 import com.nonglam.open_server.shared.ErrorCode;
 import com.nonglam.open_server.shared.SimHashUtil;
 
@@ -36,26 +33,6 @@ public class PostService {
     var post = findById(postId);
     var opener = openerService.findById(openerId);
     return postMetaDataEnricher.enrich(post, opener);
-  }
-
-  public CursorPagedResponse<PostResponse> getPosts(Long after, Long openerId) {
-    final int fixedSize = 5;
-    int fetchSize = fixedSize + 1;
-    PageRequest pageRequest = PageRequest.of(0, fetchSize);
-    List<Post> fetchedPosts;
-    List<Post> posts;
-    if (after == null) {
-      fetchedPosts = postRepository.findTopNOrderByIdDesc(pageRequest);
-    } else {
-      fetchedPosts = postRepository.findTopNByIdLessThanOrderThanDesc(after, pageRequest);
-    }
-    int fetchedSize = fetchedPosts.size();
-    boolean hasMore = fetchedSize > fixedSize;
-    posts = hasMore ? fetchedPosts.subList(0, fixedSize) : fetchedPosts;
-    Long nextCursor = hasMore ? fetchedPosts.get(posts.size() - 1).getId() : null;
-    var opener = openerService.findById(openerId);
-    var postResponseList = postMetaDataEnricher.enrich(posts, opener);
-    return new CursorPagedResponse<>(postResponseList, hasMore, nextCursor);
   }
 
   public Post findById(Long postId) {

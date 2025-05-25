@@ -34,6 +34,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class PostController {
   PostService postService;
+  PostQueryService postQueryService;
   OpenerService openerService;
   PostRateLimiterService postRateLimiterService;
 
@@ -49,7 +50,7 @@ public class PostController {
   public ResponseEntity<APIResponse<CursorPagedResponse<PostResponse>>> getPosts(
       @RequestParam(required = false) Long after,
       @AuthenticationPrincipal CustomUserDetail user) {
-    var response = postService.getPosts(after, user.getUser().getId());
+    var response = postQueryService.getFeed(after, user.getUser().getId());
     return ResponseEntity.ok(APIResponse.success("Fetched posts", response));
   }
 
