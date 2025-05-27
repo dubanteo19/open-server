@@ -11,15 +11,19 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data
+@Getter
 @Entity
 @Table(name = "opener_follows", uniqueConstraints = {
     @UniqueConstraint(columnNames = { "follower_id", "followed_id" })
 })
-@EqualsAndHashCode(callSuper = false)
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OpenerFollow extends Auditable {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

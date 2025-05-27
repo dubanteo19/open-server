@@ -1,7 +1,5 @@
 package com.nonglam.open_server.domain.user;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,23 +44,28 @@ public class OpenerController {
     return ResponseEntity.ok(APIResponse.success("fetched opener's likedPostIds", bookmarkedPosts));
   }
 
-  @PutMapping("/{openerId}")
-  public ResponseEntity<APIResponse<OpenerDetail>> updateOpener(@PathVariable Long openerId,
+  @PutMapping
+  public ResponseEntity<APIResponse<Void>> updateOpener(
+      @AuthenticationPrincipal CustomUserDetail userDetail,
       @RequestBody OpenerUpdateRequest request) {
-    var openerDetail = openerService.updateOpener(openerId, request);
-    return ResponseEntity.ok(APIResponse.success("update openerDetail", openerDetail));
+    openerService.updateOpener(userDetail.getUser().getId(), request);
+    return ResponseEntity.ok(APIResponse.success("update openerDetail"));
   }
 
   @PutMapping("/{openerId}/avatar")
-  public ResponseEntity<APIResponse<OpenerDetail>> updateAvatar(@PathVariable Long openerId,
+  public ResponseEntity<APIResponse<Void>> updateAvatar(
+      @PathVariable Long openerId,
       @RequestBody String avatarUrl) {
-    var openerDetail = openerService.updateAvatar(openerId, avatarUrl);
-    return ResponseEntity.ok(APIResponse.success("update avatar openerDetail", openerDetail));
+    openerService.updateAvatar(openerId, avatarUrl);
+    return ResponseEntity.ok(APIResponse.success("update avatar openerDetail"));
   }
 
   @GetMapping("/{username}")
-  public ResponseEntity<APIResponse<OpenerDetail>> getOpenerDetail(@PathVariable String username) {
-    var openerDetail = openerService.getOpenerDetail(username);
+  public ResponseEntity<APIResponse<OpenerDetail>> getOpenerDetail(
+      @PathVariable String username,
+      @AuthenticationPrincipal CustomUserDetail userDetail) {
+    Long currentOpenerId = userDetail.getUser().getId();
+    var openerDetail = openerService.getOpenerDetail(username, currentOpenerId);
     return ResponseEntity.ok(APIResponse.success("fetched openerDetail", openerDetail));
   }
 }

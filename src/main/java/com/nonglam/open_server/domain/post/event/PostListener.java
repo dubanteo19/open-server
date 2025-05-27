@@ -16,7 +16,6 @@ import org.springframework.web.client.RestTemplate;
 import com.nonglam.open_server.domain.comment.event.CommentCreatedEvent;
 import com.nonglam.open_server.domain.post.Post;
 import com.nonglam.open_server.domain.post.PostRepository;
-import com.nonglam.open_server.domain.post.PostService;
 import com.nonglam.open_server.domain.post.dto.response.SentimentPredictionResponse;
 import com.nonglam.open_server.domain.post.dto.response.SpamPredictioResponse;
 import com.nonglam.open_server.exception.ApiException;

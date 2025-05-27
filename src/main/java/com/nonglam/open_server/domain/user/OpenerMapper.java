@@ -11,14 +11,15 @@ public class OpenerMapper {
     currentOpener.updateInfo(request.bio(), request.displayName(), request.location());
   }
 
-  public OpenerDetail toOpenerDetail(Opener opener) {
+  public OpenerDetail toOpenerDetail(Opener opener, boolean followed) {
     var openerSummary = toOpenerResponse(opener);
     return new OpenerDetail(openerSummary,
         opener.getBio(),
         opener.getLocation(),
         opener.getJoinDate().toString(),
         opener.getFollowing().size(),
-        opener.getFollowers().size());
+        opener.getFollowers().size(),
+        followed);
   }
 
   public OpenerResponse toOpenerResponse(Opener opener) {
