@@ -1,34 +1,31 @@
 package com.nonglam.open_server.domain.user;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.nonglam.open_server.domain.post.Post;
-import com.nonglam.open_server.domain.post.PostMapper;
-import com.nonglam.open_server.domain.post.PostRepository;
-import com.nonglam.open_server.domain.postlike.PostLike;
+import com.nonglam.open_server.domain.discovery.dto.response.SuggestedOpener;
+import com.nonglam.open_server.domain.discovery.enricher.SuggestedOpenerEnricher;
 import com.nonglam.open_server.domain.user.dto.request.OpenerUpdateRequest;
 import com.nonglam.open_server.domain.user.dto.response.OpenerDetail;
+import com.nonglam.open_server.domain.userfollow.OpenerFollow;
+import com.nonglam.open_server.domain.userfollow.OpenerFollowRepository;
 import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
 import com.nonglam.open_server.shared.ErrorCode;
 import com.nonglam.open_server.shared.PageMapper;
+import com.nonglam.open_server.shared.PagedResponse;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import lombok.RequiredArgsConstructor;
 
 @Service
-@AllArgsConstructor
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
 public class OpenerService {
-  OpenerRepository openerRepository;
-  PostRepository postRepository;
-  OpenerMapper openerMapper;
-  PageMapper pageMapper;
-  PostMapper postMapper;
+  private final OpenerRepository openerRepository;
+  private final OpenerFollowRepository openerFollowRepository;
+  private final OpenerMapper openerMapper;
+  private final PageMapper pageMapper;
+  private final SuggestedOpenerEnricher suggestedOpenerEnricher;
 
   public Opener findById(Long id) {
     return openerRepository
@@ -42,23 +39,22 @@ public class OpenerService {
         .orElseThrow(ResourceNotFoundException::openerNotFound);
   }
 
-  public OpenerDetail getOpenerDetail(String username) {
+  public OpenerDetail getOpenerDetail(String username, Long currentOpenerId) {
     var opener = findByUsername(username);
-    return openerMapper.toOpenerDetail(opener);
+    boolean followed = openerFollowRepository.existsByFollowedIdAndFollowerId(opener.getId(), currentOpenerId);
+    return openerMapper.toOpenerDetail(opener, followed);
   }
 
-  public OpenerDetail updateOpener(Long openerId, OpenerUpdateRequest request) {
+  public void updateOpener(Long openerId, OpenerUpdateRequest request) {
     var currentOpener = findById(openerId);
     openerMapper.applyUpdateToEntity(currentOpener, request);
-    var savedOpener = openerRepository.save(currentOpener);
-    return openerMapper.toOpenerDetail(savedOpener);
+    openerRepository.save(currentOpener);
   }
 
-  public OpenerDetail updateAvatar(Long openerId, String avatarUrl) {
+  public void updateAvatar(Long openerId, String avatarUrl) {
     var currentOpener = findById(openerId);
     currentOpener.setAvatarUrl(avatarUrl);
-    var savedOpener = openerRepository.save(currentOpener);
-    return openerMapper.toOpenerDetail(savedOpener);
+    openerRepository.save(currentOpener);
   }
 
   public void flagAsSpammer(Long openerId) {
@@ -73,12 +69,41 @@ public class OpenerService {
     openerRepository.save(opener);
   }
 
-  public List<Long> getLikedPostIds(Long openerId) {
-    return findById(openerId).getPostLikes()
-        .stream()
-        .map(PostLike::getPost)
-        .map(Post::getId)
-        .toList();
+  public void follow(Long id, Long currentOpenerId) {
+    var followed = findById(id);
+    var follower = findById(currentOpenerId);
+    var openerFollow = OpenerFollow
+        .builder()
+        .followed(followed)
+        .follower(follower)
+        .build();
+    openerFollowRepository.save(openerFollow);
+  }
+
+  public PagedResponse<SuggestedOpener> getFollowers(String username, Long currentOpenerId,
+      Pageable pageable) {
+    var openerId = findByUsername(username).getId();
+    var page = openerFollowRepository.findAllByFollowedId(openerId, pageable);
+    var currentOpener = findById(currentOpenerId);
+    var suggestedOpenerList = suggestedOpenerEnricher.enrich(page.getContent(), currentOpener);
+    return pageMapper.toPagedResponse(page, suggestedOpenerList);
+  }
+
+  public PagedResponse<SuggestedOpener> getFollowing(String username, Long currentOpenerId,
+      Pageable pageable) {
+    var openerId = findByUsername(username).getId();
+    var page = openerFollowRepository.findAllByFollowerId(openerId, pageable);
+    var currentOpener = findById(currentOpenerId);
+    var suggestedOpenerList = suggestedOpenerEnricher.enrich(page.getContent(), currentOpener);
+    return pageMapper.toPagedResponse(page, suggestedOpenerList);
+  }
+
+  public void unfollowOpener(Long id, Long currentOpenerId) {
+    var openerFollow = openerFollowRepository
+        .findByFollowerIdAndFollowedId(currentOpenerId, id)
+        .orElseThrow(() -> new ResourceNotFoundException("Opener Follow not found"));
+    openerFollowRepository.delete(openerFollow);
+
   }
 
 }

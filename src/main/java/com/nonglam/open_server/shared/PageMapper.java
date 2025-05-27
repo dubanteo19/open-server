@@ -7,9 +7,12 @@ import java.util.List;
 
 @Component
 public class PageMapper {
-    public <T> PagedResponse<T> toPagedResponse(Page<?> page, List<T> content) {
-        return new PagedResponse<T>(content, page.getNumber(), page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages(), page.isLast());
-    }
+  public <T> PagedResponse<T> toPagedResponse(Page<?> page, List<T> content) {
+    return new PagedResponse<T>(
+        content,
+        page.getNumber(),
+        page.getSize(),
+        page.getTotalElements(),
+        page.getTotalPages(), page.isLast());
+  }
 }

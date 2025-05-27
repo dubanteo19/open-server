@@ -65,6 +65,7 @@ public class SecurityConfig {
 
   @Bean
   CorsFilter corsFilter() {
+    System.out.println(allowedOrigins);
     CorsConfiguration config = new CorsConfiguration();
     config.setAllowCredentials(true);
     config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
