@@ -1,5 +1,6 @@
 package com.nonglam.open_server.domain.user;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import com.nonglam.open_server.domain.discovery.dto.response.SuggestedOpener;
 import com.nonglam.open_server.domain.discovery.enricher.SuggestedOpenerEnricher;
 import com.nonglam.open_server.domain.user.dto.request.OpenerUpdateRequest;
 import com.nonglam.open_server.domain.user.dto.response.OpenerDetail;
+import com.nonglam.open_server.domain.user.dto.response.OpenerResponse;
 import com.nonglam.open_server.domain.userfollow.OpenerFollow;
 import com.nonglam.open_server.domain.userfollow.OpenerFollowRepository;
 import com.nonglam.open_server.exception.ApiException;
@@ -103,6 +105,13 @@ public class OpenerService {
         .findByFollowerIdAndFollowedId(currentOpenerId, id)
         .orElseThrow(() -> new ResourceNotFoundException("Opener Follow not found"));
     openerFollowRepository.delete(openerFollow);
+
+  }
+
+  public PagedResponse<OpenerResponse> getFriends(Long currentOpenerId, Pageable pageable) {
+    var page = openerRepository.findMutualFriends(currentOpenerId, pageable);
+    var openerResponseList = page.map(openerMapper::toOpenerResponse).getContent();
+    return pageMapper.toPagedResponse(page, openerResponseList);
 
   }
 

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nonglam.open_server.domain.auth.APIResponse;
 import com.nonglam.open_server.domain.discovery.dto.response.SuggestedOpener;
 import com.nonglam.open_server.domain.user.OpenerService;
+import com.nonglam.open_server.domain.user.dto.response.OpenerResponse;
 import com.nonglam.open_server.security.CustomUserDetail;
 import com.nonglam.open_server.shared.PagedResponse;
 
@@ -36,6 +37,17 @@ public class OpenerFollowController {
     var pageable = PageRequest.of(page, size, Sort.by("createdAt"));
     var response = openerService.getFollowing(username, currentOpenerId, pageable);
     return ResponseEntity.ok(APIResponse.success("opener's following fetched", response));
+  }
+
+  @GetMapping("/friends")
+  public ResponseEntity<APIResponse<PagedResponse<OpenerResponse>>> getFriends(
+      @RequestParam(defaultValue = "0", required = false) int page,
+      @RequestParam(defaultValue = "10", required = false) int size,
+      @AuthenticationPrincipal CustomUserDetail userDetail) {
+    Long currentOpenerId = userDetail.getUser().getId();
+    var pageable = PageRequest.of(page, size, Sort.by("join_date"));
+    var response = openerService.getFriends(currentOpenerId, pageable);
+    return ResponseEntity.ok(APIResponse.success("user's friends fetched", response));
   }
 
   @GetMapping("/{username}/followers")
