@@ -22,6 +22,7 @@ public class MessageMapper {
     var sender = openerMapper.toOpenerResponse(message.getSender());
     return new MessageResponse(
         message.getId(),
+        message.getConversation().getId(),
         message.getContent(),
         sender,
         false,

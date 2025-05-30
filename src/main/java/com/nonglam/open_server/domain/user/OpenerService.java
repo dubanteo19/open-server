@@ -35,6 +35,12 @@ public class OpenerService {
         .orElseThrow(ResourceNotFoundException::openerNotFound);
   }
 
+  public Opener findByEmail(String email) {
+    return openerRepository
+        .findByEmail(email)
+        .orElseThrow(ResourceNotFoundException::openerNotFound);
+  }
+
   public Opener findByUsername(String username) {
     return openerRepository
         .findByUsername(username)

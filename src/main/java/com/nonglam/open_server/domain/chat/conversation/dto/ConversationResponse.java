@@ -1,8 +1,10 @@
 package com.nonglam.open_server.domain.chat.conversation.dto;
 
+import java.util.List;
+
+import com.nonglam.open_server.domain.chat.message.dto.MessageResponse;
+
 public record ConversationResponse(
-    Long id,
-    String name,
-    String avatar,
-    Long receiverId) {
+    ConversationSummaryResponse summary,
+    List<MessageResponse> messages) {
 }

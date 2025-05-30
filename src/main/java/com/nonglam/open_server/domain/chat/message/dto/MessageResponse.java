@@ -6,6 +6,7 @@ import com.nonglam.open_server.domain.user.dto.response.OpenerResponse;
 
 public record MessageResponse(
     Long id,
+    Long conversationId,
     String content,
     OpenerResponse sender,
     boolean seen,
