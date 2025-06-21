@@ -1,15 +1,8 @@
 package com.nonglam.open_server.config;
 
-import com.nonglam.open_server.security.JwtFilter;
-import com.nonglam.open_server.security.filter.RateLimitingFilter;
-
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +14,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -29,7 +21,13 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.List;
+import com.nonglam.open_server.security.JwtFilter;
+import com.nonglam.open_server.security.filter.RateLimitingFilter;
+
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @Configuration
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -68,6 +66,7 @@ public class SecurityConfig {
   @Bean
   CorsFilter corsFilter() {
     CorsConfiguration config = new CorsConfiguration();
+    System.out.println(allowedOrigins);
     config.setAllowCredentials(true);
     config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
     config.setAllowedHeaders(List.of("*"));

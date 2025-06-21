@@ -18,4 +18,15 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
         """)
   List<Conversation> findAllByOpenerId(@Param("id") Long id);
 
+  @Query("""
+        SELECT COUNT(DISTINCT c)
+        FROM Conversation c
+        JOIN c.messages m
+        WHERE (c.opener1.id=:openerId
+        OR c.opener2.id=:openerId)
+        AND m.seen = false
+        AND m.sender.id <> :openerId
+      """)
+  long countUnseenConversations(@Param("openerId") Long openerId);
+
 }

@@ -1,6 +1,8 @@
 package com.nonglam.open_server.domain.chat.conversation;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.springframework.stereotype.Component;
 
@@ -26,14 +28,28 @@ public class ConversationMapper {
   public ConversationSummaryResponse toSummary(Conversation conversation, Long currentOpenerId) {
     var opener1 = conversation.getOpener1();
     var opener2 = conversation.getOpener2();
+    var lastMessage = conversation.getLastMessage();
+    String lastMessageContent = null;
+    LocalDateTime lastMessageSentAt = null;
+    if (lastMessage != null) {
+      lastMessageContent = lastMessage.getContent();
+      lastMessageSentAt = lastMessage.getCreatedAt();
+    }
     String name = opener1.getId() == currentOpenerId ? opener2.getUsername() : opener1.getUsername();
     String avatar = opener1.getId() == currentOpenerId ? opener2.getAvatarUrl() : opener1.getAvatarUrl();
     String receiver = opener1.getId() == currentOpenerId ? opener2.getUsername() : opener1.getUsername();
+    long unseenCount = conversation.getMessages()
+        .stream()
+        .filter(message -> message.getSender().getId() != currentOpenerId)
+        .filter(Predicate.not(Message::isSeen)).count();
     return new ConversationSummaryResponse(
         conversation.getId(),
         name,
         avatar,
-        receiver);
+        receiver,
+        unseenCount,
+        lastMessageContent,
+        lastMessageSentAt);
   }
 
   public ConversationResponse toResponse(Conversation conversation, List<Message> messages, Long currentOpenerId) {

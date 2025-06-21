@@ -7,6 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +24,23 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChatController {
   private final ChatService chatService;
+
+  @GetMapping("/conversations/unseen")
+  public ResponseEntity<APIResponse<Long>> getUnseenConversationCount(
+      @AuthenticationPrincipal CustomUserDetail userDetail) {
+    Long currentOpenerId = userDetail.getUser().getId();
+    var response = chatService.countUnseenConversations(currentOpenerId);
+    return ResponseEntity.ok(APIResponse.success(response));
+  }
+
+  @PostMapping("/conversations/{id}/seen")
+  public ResponseEntity<APIResponse<Void>> markAsSeen(
+      @PathVariable Long id,
+      @AuthenticationPrincipal CustomUserDetail userDetail) {
+    Long currentOpenerId = userDetail.getUser().getId();
+    chatService.markAsSeen(id, currentOpenerId);
+    return ResponseEntity.ok(APIResponse.success("conversation marked as seen "));
+  }
 
   @GetMapping("/conversations/{id}")
   public ResponseEntity<APIResponse<ConversationResponse>> getConversationById(

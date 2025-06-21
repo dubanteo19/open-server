@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -44,4 +45,10 @@ public class Conversation {
   @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
   @Builder.Default
   private List<Message> messages = new ArrayList<>();
+  @OneToOne
+  private Message lastMessage;
+
+  public void setLastMessage(Message message) {
+    this.lastMessage = message;
+  }
 }

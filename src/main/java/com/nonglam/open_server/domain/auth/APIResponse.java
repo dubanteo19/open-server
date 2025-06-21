@@ -35,4 +35,8 @@ public class APIResponse<T> {
   public static <T> APIResponse<T> error(String message, List<String> errors, ErrorCode errorCode) {
     return new APIResponse(message, false, null, errors, errorCode);
   }
+
+  public static <T> APIResponse<T> success(T data) {
+    return new APIResponse("success", true, data, null, null);
+  }
 }

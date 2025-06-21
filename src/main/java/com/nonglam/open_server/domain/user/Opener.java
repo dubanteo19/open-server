@@ -67,4 +67,9 @@ public class Opener extends User {
   public void flagAsSpammer() {
     this.spamFlagCount++;
   }
+
+  public void addNotification(Notification notification) {
+    this.notifications.add(notification);
+    notification.setOpener(this);
+  }
 }

@@ -6,6 +6,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.nonglam.open_server.domain.notification.NotificationService;
+import com.nonglam.open_server.domain.notification.eventlistener.event.NotificationEvent;
 import com.nonglam.open_server.domain.post.PostService;
 import com.nonglam.open_server.domain.post.event.LikePostEvent;
 import com.nonglam.open_server.domain.post.event.UnlikePostEvent;
@@ -27,6 +29,7 @@ public class PostLikeService {
   OpenerService openerService;
   PostLikeMapper postLikeMapper;
   ApplicationEventPublisher eventPublisher;
+  NotificationService notificationService;
 
   public Long unlikePost(Long postId, Long userId) {
     var postLike = postLikeRepository
@@ -43,6 +46,10 @@ public class PostLikeService {
     var postLike = PostLike.builder().post(post).opener(opener).build();
     postLikeRepository.save(postLike);
     eventPublisher.publishEvent(new LikePostEvent(postId));
+    if (userId != post.getAuthor().getId()) {
+      String message = opener.getUsername() + " has just liked your post " + post.getId();
+      notificationService.saveNotification(message, post.getAuthor());
+    }
     return postId;
   }
 

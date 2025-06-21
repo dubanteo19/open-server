@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,11 +14,13 @@ import com.nonglam.open_server.domain.chat.conversation.ConversationMapper;
 import com.nonglam.open_server.domain.chat.conversation.ConversationRepository;
 import com.nonglam.open_server.domain.chat.conversation.dto.ConversationResponse;
 import com.nonglam.open_server.domain.chat.conversation.dto.ConversationSummaryResponse;
+import com.nonglam.open_server.domain.chat.eventlistener.event.MessageCreatedEvent;
 import com.nonglam.open_server.domain.chat.message.Message;
 import com.nonglam.open_server.domain.chat.message.MessageMapper;
 import com.nonglam.open_server.domain.chat.message.MessageRepository;
 import com.nonglam.open_server.domain.chat.message.dto.MessageCreateRequest;
 import com.nonglam.open_server.domain.chat.message.dto.MessageResponse;
+import com.nonglam.open_server.domain.notification.eventlistener.event.NotificationEvent;
 import com.nonglam.open_server.domain.user.Opener;
 import com.nonglam.open_server.domain.user.OpenerService;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
@@ -32,6 +35,7 @@ public class ChatService {
   private final ConversationRepository conversationRepository;
   private final ConversationMapper conversationMapper;
   private final MessageMapper messageMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   private String generateConversationKey(Long openerId1, Long openerId2) {
     return Stream.of(openerId1, openerId2).sorted()
@@ -59,9 +63,21 @@ public class ChatService {
         .orElseThrow(() -> new ResourceNotFoundException("conversation not found"));
   }
 
+  public long countUnseenConversations(Long currentOpenerId) {
+    System.out.println(currentOpenerId);
+    return conversationRepository.countUnseenConversations(currentOpenerId);
+  }
+
   public List<ConversationSummaryResponse> getConversationSummaryList(Long currentOpenerId) {
     var conversations = conversationRepository.findAllByOpenerId(currentOpenerId);
-    return conversationMapper.toSummaryList(conversations, currentOpenerId);
+    var sortedConversations = conversations.stream()
+        .sorted(Comparator.comparing(
+            conversation -> conversation.getLastMessage() != null
+                ? conversation.getLastMessage().getCreatedAt()
+                : null,
+            Comparator.nullsLast(Comparator.reverseOrder())))
+        .toList();
+    return conversationMapper.toSummaryList(sortedConversations, currentOpenerId);
   }
 
   public ConversationResponse getConversationById(Long id, Long currentOpenerId) {
@@ -76,7 +92,19 @@ public class ChatService {
     var conversation = findConversationById(request.conversationId());
     var message = new Message(sender, conversation, request.content());
     var savedMessage = messageRepository.save(message);
+    var notification = new NotificationEvent(request.receiver(), username + " has just sent you a message");
+    eventPublisher.publishEvent(new MessageCreatedEvent(savedMessage.getId(), conversation.getId()));
+    eventPublisher.publishEvent(notification);
     return messageMapper.toResponse(savedMessage);
 
+  }
+
+  public void markAsSeen(Long id, Long currentOpenerId) {
+    var conversation = findConversationById(id);
+    for (var message : conversation.getMessages()) {
+      if (!message.isSeen() && message.getSender().getId() != currentOpenerId)
+        message.markAsSeen();
+    }
+    conversationRepository.save(conversation);
   }
 }

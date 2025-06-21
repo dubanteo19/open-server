@@ -38,4 +38,8 @@ public class Message extends Auditable {
   private String content;
   @Builder.Default
   private boolean seen = false;
+
+  public void markAsSeen(){
+    this.seen=true;
+  }
 }

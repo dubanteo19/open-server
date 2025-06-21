@@ -28,6 +28,7 @@ public class RealTimeChatController {
   @MessageMapping("/chat.send")
   public void sendMessage(Principal principal, MessageCreateRequest request) {
     String sender = principal.getName();
+    System.out.println();
     var payload = chatService.saveMessage(sender, request);
     String topic = "/queue/messages";
     messagingTemplate.convertAndSendToUser(request.receiver(), topic, payload);

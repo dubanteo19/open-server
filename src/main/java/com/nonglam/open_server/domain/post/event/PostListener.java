@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -45,8 +47,7 @@ public class PostListener {
     return new HttpEntity<>(requestBody, headers);
   }
 
-  @EventListener
-  @Transactional
+  @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
   public void handleCreatePost(PostCreateEvent event) {
     var post = event.post();
     var request = prepareRequest(post.getContent());
@@ -60,6 +61,7 @@ public class PostListener {
       log.warn("Spam prediction service is not available");
     }
     if (spam == 1) {
+      postRepository.deleteById(post.getId());
       throw new ApiException("Post content spam detected", ErrorCode.POST_CONTENT_SPAM_DETECTED);
     }
     post.updateSentitment(sentiment);
@@ -88,6 +90,7 @@ public class PostListener {
   @Async
   public void handleLikePost(LikePostEvent event) {
     postRepository.incrementLikeCount(event.id());
+
   }
 
   @EventListener
