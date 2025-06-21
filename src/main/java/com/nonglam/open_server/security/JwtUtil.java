@@ -52,8 +52,12 @@ public class JwtUtil {
     return resolver.apply(claims);
   }
 
-  public String extractUsername(String token, boolean isRefresh) {
-    return extractClaim(token, Claims::getSubject, isRefresh);
+  public String extractUsername(String token) {
+    return extractClaim(token, (claim -> (String) claim.get("username")), false);
+  }
+
+  public String extractEmail(String token) {
+    return extractClaim(token, Claims::getSubject, false);
   }
 
   public boolean isTokenValid(String token, boolean isRefresh) {

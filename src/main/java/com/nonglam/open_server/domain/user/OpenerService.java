@@ -1,15 +1,20 @@
 package com.nonglam.open_server.domain.user;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.nonglam.open_server.domain.chat.ChatService;
 import com.nonglam.open_server.domain.discovery.dto.response.SuggestedOpener;
 import com.nonglam.open_server.domain.discovery.enricher.SuggestedOpenerEnricher;
+import com.nonglam.open_server.domain.notification.NotificationService;
 import com.nonglam.open_server.domain.user.dto.request.OpenerUpdateRequest;
 import com.nonglam.open_server.domain.user.dto.response.OpenerDetail;
+import com.nonglam.open_server.domain.user.dto.response.OpenerResponse;
 import com.nonglam.open_server.domain.userfollow.OpenerFollow;
 import com.nonglam.open_server.domain.userfollow.OpenerFollowRepository;
+import com.nonglam.open_server.domain.userfollow.eventlistener.MutualFollowEvent;
 import com.nonglam.open_server.exception.ApiException;
 import com.nonglam.open_server.exception.ResourceNotFoundException;
 import com.nonglam.open_server.shared.ErrorCode;
@@ -26,10 +31,18 @@ public class OpenerService {
   private final OpenerMapper openerMapper;
   private final PageMapper pageMapper;
   private final SuggestedOpenerEnricher suggestedOpenerEnricher;
+  private final ApplicationEventPublisher eventPublisher;
+  private final NotificationService notificationService;
 
   public Opener findById(Long id) {
     return openerRepository
         .findById(id)
+        .orElseThrow(ResourceNotFoundException::openerNotFound);
+  }
+
+  public Opener findByEmail(String email) {
+    return openerRepository
+        .findByEmail(email)
         .orElseThrow(ResourceNotFoundException::openerNotFound);
   }
 
@@ -78,6 +91,15 @@ public class OpenerService {
         .follower(follower)
         .build();
     openerFollowRepository.save(openerFollow);
+    String message = follower.getUsername() + " has just followed you";
+    notificationService.saveNotification(message, followed);
+    var followedOpnerFollowingList = followed.getFollowing()
+        .stream()
+        .map(OpenerFollow::getFollowed)
+        .map(Opener::getId).toList();
+    if (followedOpnerFollowingList.contains(currentOpenerId)) {
+      eventPublisher.publishEvent(new MutualFollowEvent(currentOpenerId, id));
+    }
   }
 
   public PagedResponse<SuggestedOpener> getFollowers(String username, Long currentOpenerId,
@@ -103,6 +125,13 @@ public class OpenerService {
         .findByFollowerIdAndFollowedId(currentOpenerId, id)
         .orElseThrow(() -> new ResourceNotFoundException("Opener Follow not found"));
     openerFollowRepository.delete(openerFollow);
+
+  }
+
+  public PagedResponse<OpenerResponse> getFriends(Long currentOpenerId, Pageable pageable) {
+    var page = openerRepository.findMutualFriends(currentOpenerId, pageable);
+    var openerResponseList = page.map(openerMapper::toOpenerResponse).getContent();
+    return pageMapper.toPagedResponse(page, openerResponseList);
 
   }
 

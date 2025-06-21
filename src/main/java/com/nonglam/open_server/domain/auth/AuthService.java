@@ -54,7 +54,8 @@ public class AuthService {
       throw new ApiException("opener's account blocked", ErrorCode.OPENER_BLOCKED);
     }
     var userResponse = userMapper.toUserResponse(user);
-    String accessToken = jwtUtil.generateAccessToken(user.getEmail(), Map.of("role", user.getRole()));
+    String accessToken = jwtUtil.generateAccessToken(user.getEmail(),
+        Map.of("role", user.getRole(), "username", user.getUsername()));
     String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
     return new LoginResponse(userResponse, accessToken, refreshToken);
   }
@@ -96,7 +97,8 @@ public class AuthService {
         throw new ApiException("opener's account blocked", ErrorCode.OPENER_BLOCKED);
       }
       var userResponse = userMapper.toUserResponse(opener);
-      String accessToken = jwtUtil.generateAccessToken(opener.getEmail(), Map.of("role", opener.getRole()));
+      String accessToken = jwtUtil.generateAccessToken(opener.getEmail(),
+          Map.of("role", opener.getRole(), "username", opener.getUsername()));
       String refreshToken = jwtUtil.generateRefreshToken(opener.getEmail());
       return new LoginResponse(userResponse, accessToken, refreshToken);
     } catch (GeneralSecurityException | IOException e) {

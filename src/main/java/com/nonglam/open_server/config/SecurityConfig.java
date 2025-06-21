@@ -1,12 +1,6 @@
 package com.nonglam.open_server.config;
 
-import com.nonglam.open_server.security.JwtFilter;
-import com.nonglam.open_server.security.filter.RateLimitingFilter;
-
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,7 +21,13 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.List;
+import com.nonglam.open_server.security.JwtFilter;
+import com.nonglam.open_server.security.filter.RateLimitingFilter;
+
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @Configuration
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -65,8 +65,8 @@ public class SecurityConfig {
 
   @Bean
   CorsFilter corsFilter() {
-    System.out.println(allowedOrigins);
     CorsConfiguration config = new CorsConfiguration();
+    System.out.println(allowedOrigins);
     config.setAllowCredentials(true);
     config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
     config.setAllowedHeaders(List.of("*"));
@@ -91,4 +91,5 @@ public class SecurityConfig {
       AuthenticationConfiguration config) throws Exception {
     return config.getAuthenticationManager();
   }
+
 }

@@ -32,16 +32,16 @@ public class JwtFilter extends OncePerRequestFilter {
       FilterChain filterChain)
       throws ServletException, IOException {
     final String authHeader = request.getHeader("Authorization");
-    final String username;
+    final String email;
     final String token;
     if (authHeader == null || !authHeader.startsWith("Bearer")) {
       filterChain.doFilter(request, response);
       return;
     }
     token = authHeader.substring(7);
-    username = jwtUtil.extractUsername(token, false);
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      var userDetail = (CustomUserDetail) userDetailsService.loadUserByUsername(username);
+    email = jwtUtil.extractEmail(token);
+    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+      var userDetail = (CustomUserDetail) userDetailsService.loadUserByUsername(email);
 
       if (userDetail.getUser().isBlocked()) {
         throw new ApiException("Your account is blocked", ErrorCode.OPENER_BLOCKED);

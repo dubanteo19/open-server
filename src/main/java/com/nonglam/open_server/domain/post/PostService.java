@@ -4,6 +4,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.nonglam.open_server.domain.notification.NotificationService;
 import com.nonglam.open_server.domain.post.dto.request.PostCreateRequest;
 import com.nonglam.open_server.domain.post.dto.request.PostUpdateRequest;
 import com.nonglam.open_server.domain.post.dto.response.PostResponse;
@@ -15,6 +16,7 @@ import com.nonglam.open_server.exception.ResourceNotFoundException;
 import com.nonglam.open_server.shared.ErrorCode;
 import com.nonglam.open_server.shared.SimHashUtil;
 
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +30,7 @@ public class PostService {
   PostMapper postMapper;
   PostMetaDataEnricher postMetaDataEnricher;
   ApplicationEventPublisher eventPublisher;
+  NotificationService notificationService;
 
   public PostResponse getPostById(Long postId, Long openerId) {
     var post = findById(postId);
@@ -51,6 +54,7 @@ public class PostService {
     postRepository.save(currentPostReference);
   }
 
+  @Transactional
   public PostResponse createPost(PostCreateRequest request, Long openerId) {
     var opener = openerService.findById(openerId);
     var simHash = SimHashUtil.simHash(request.payload().content());
@@ -60,6 +64,10 @@ public class PostService {
     var post = postMapper.toPost(request, opener, simHash);
     var savedPost = postRepository.save(post);
     eventPublisher.publishEvent(new PostCreateEvent(savedPost, savedPost.getAuthor().getId()));
+    String message = opener.getUsername() + " has just created a post " + post.getId();
+    for (var follower : opener.getFollowers()) {
+      notificationService.saveNotification(message, follower.getFollower());
+    }
     return postMapper.toPostResponse(savedPost);
   }
 
